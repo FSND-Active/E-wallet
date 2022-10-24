@@ -24,7 +24,7 @@ Sample model
 """
 
 class model_name(db.Model):
-    __tablename__=""
+    __tablename__="model_name"
 
     id = db.Column(db.Integer, primary_key=True)
     args= db.Column(db.String)
