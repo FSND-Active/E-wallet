@@ -1,3 +1,4 @@
+from enum import unique
 from flask_sqlalchemy import SQLAlchemy
 import os
 
@@ -31,8 +32,8 @@ class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    username = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
 
     def __init__(self, id, first_name, last_name, email, username, password):
@@ -310,11 +311,11 @@ class UserTransactions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # should we create a seperate column for type of transaction either debit or credit or just add it tp the description
     description = db.Column(db.String, nullable=False)
-    # type = db.Column(db.String, nullable=False)
+    type = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     # should we make it string or Boolean
-    status = db.Column(db.String, nullable=False)
-    # status = db.Column(db.Boolean, nullable=False)
+    # status = db.Column(db.String, nullable=False)
+    status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
     user = db.relationship('User', backref='users_transactions', lazy=True)
@@ -361,11 +362,11 @@ class CompanyTransactions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     # should we create a seperate column for type of transaction either debit or credit or just add it tp the description
     description = db.Column(db.String, nullable=False)
-    # type = db.Column(db.String, nullable=False)
+    type = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     # should we make it string or Boolean
-    status = db.Column(db.String, nullable=False)
-    # status = db.Column(db.Boolean, nullable=False)
+    # status = db.Column(db.String, nullable=False)
+    status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
 
