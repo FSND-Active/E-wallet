@@ -1,8 +1,9 @@
-from enum import unique
-from flask_sqlalchemy import SQLAlchemy
 import os
+from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 
 
+load_dotenv()
 database_name = os.getenv('DB_NAME')
 database_user = os.getenv('DB_USER')
 database_password = os.getenv('DB_PASS',)
@@ -77,6 +78,7 @@ class UserDetails(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     gender = db.Column(db.String(7), nullable=False)
     date_of_birth = db.Column(db.String(20), nullable=False)
+    phone_number = db.Column(db.Integer, nullable=False)
     occupation = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     state = db.Column(db.String(50), nullable=False)
@@ -87,10 +89,11 @@ class UserDetails(db.Model):
     utility_bill = db.Column(db.String(50), nullable=False)
     user = db.relationship('User', backref='users_details', lazy=True)
 
-    def __init__(self, id, gender, date_of_birth, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
+    def __init__(self, id, gender, date_of_birth, phone_number, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
         self.id = id
         self.gender = gender
         self.date_of_birth = date_of_birth
+        self.phone_number = phone_number
         self.occupation = occupation
         self.country = country
         self.state = state
@@ -116,6 +119,7 @@ class UserDetails(db.Model):
             "id": self.id,
             "gender": self.gender,
             "date_of_birth": self.date_of_birth,
+            "phone_number": self.phone_number,
             "occupation": self.occupation,
             "country": self.country,
             "state": self.state,
@@ -179,6 +183,7 @@ class CompanyDetails(db.Model):
     __tablename__ = "company_details"
     id = db.Column(db.Integer, primary_key=True)
     date_of_registration = db.Column(db.String(20), nullable=False)
+    phone_number = db.Column(db.Integer, nullable=False)
     nature_of_business = db.Column(db.String(50), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     state = db.Column(db.String(50), nullable=False)
@@ -189,10 +194,11 @@ class CompanyDetails(db.Model):
     utility_bill = db.Column(db.String(50), nullable=False)
     company = db.relationship('Company', backref='company_details', lazy=True)
 
-    def __init__(self, id, gender, date_of_registration, nature_of_business, country, state, city, zip_code, address, verification_id, utility_bill):
+    def __init__(self, id, gender, date_of_registration, nature_of_business, phone_number, country, state, city, zip_code, address, verification_id, utility_bill):
         self.id = id
         self.gender = gender
         self.date_of_registration = date_of_registration
+        self.phone_number = phone_number
         self.nature_of_business = nature_of_business
         self.country = country
         self.state = state
@@ -216,8 +222,8 @@ class CompanyDetails(db.Model):
     def format(self):
         return {
             "id": self.id,
-            "gender": self.gender,
             "date_of_registration": self.date_of_registration,
+            "phone_number": self.phone_number,
             "nature_of_business": self.nature_of_business,
             "country": self.country,
             "state": self.state,
@@ -236,7 +242,7 @@ User Wallet
 
 
 class UserWallet(db.Model):
-    __tablename__ = "wallet"
+    __tablename__ = "user_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
     user = db.relationship('User', backref='users_details', lazy=True)
@@ -271,7 +277,7 @@ Company Wallet
 
 
 class CompanyWallet(db.Model):
-    __tablename__ = "wallet"
+    __tablename__ = "company_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
     company = db.relationship('Company', backref='company_details', lazy=True)
@@ -309,21 +315,19 @@ User Transactions
 class UserTransactions(db.Model):
     __tablename__ = "users_transactions"
     id = db.Column(db.Integer, primary_key=True)
-    # should we create a seperate column for type of transaction either debit or credit or just add it tp the description
     description = db.Column(db.String, nullable=False)
     type = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
-    # should we make it string or Boolean
-    # status = db.Column(db.String, nullable=False)
     status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
     user = db.relationship('User', backref='users_transactions', lazy=True)
 
 
-    def __init__(self, id, description, amount, status, date, time):
+    def __init__(self, id, type, description, amount, status, date, time):
         self.id = id
         self.description = description
+        self.type = type
         self.amount = amount
         self.status = status
         self.date = date
@@ -344,6 +348,7 @@ class UserTransactions(db.Model):
         return {
             "id": self.id,
             "description": self.description,
+            "type": self.type,
             "amount": self.amount,
             "status": self.status,
             "date": self.date,
@@ -360,21 +365,18 @@ Company Transactions
 class CompanyTransactions(db.Model):
     __tablename__ = "company_transactions"
     id = db.Column(db.Integer, primary_key=True)
-    # should we create a seperate column for type of transaction either debit or credit or just add it tp the description
     description = db.Column(db.String, nullable=False)
     type = db.Column(db.String, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
-    # should we make it string or Boolean
-    # status = db.Column(db.String, nullable=False)
     status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
-
     company = db.relationship('Company', backref='company_transactions', lazy=True)
 
-    def __init__(self, id, description, amount, status, date, time):
+    def __init__(self, id, description, type, amount, status, date, time):
         self.id = id
         self.description = description
+        self.type = type
         self.amount = amount
         self.status = status
         self.date = date
@@ -395,6 +397,7 @@ class CompanyTransactions(db.Model):
         return {
             "id": self.id,
             "description": self.description,
+            "type": self.type,
             "amount": self.amount,
             "status": self.status,
             "date": self.date,
