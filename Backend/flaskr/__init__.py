@@ -1,6 +1,6 @@
 from flask import Flask, request,jsonify,abort
 from flask_cors import CORS
-from models import setup_db, ModelName
+from models import *
 
 def create_app(test_config=None):
     app=Flask(__name__)
