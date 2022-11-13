@@ -324,6 +324,7 @@ class UserTransactions(db.Model):
     user = db.relationship('User', backref='users_transactions', lazy=True)
 
 
+
     def __init__(self, id, type, description, amount, status, date, time):
         self.id = id
         self.description = description
