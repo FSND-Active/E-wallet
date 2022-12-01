@@ -2,6 +2,7 @@ from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from models import *
+import sys
 
 def create_app(test_config=None):
     app=Flask(__name__)
@@ -41,8 +42,8 @@ def create_app(test_config=None):
             return jsonify({
                 "success":False,
                 "message":"Sorry user already exists",
-                "status":404
-            }),404
+                "status":403
+            }),403
         try:
             pw_hash= bcrypt.generate_password_hash(password).decode('utf-8')
             Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
@@ -62,18 +63,30 @@ def create_app(test_config=None):
         password=str(req.get("password"))
         try:
             user=Users.query.filter(Users.email==mail_or_uname).one_or_none()
-            if(not user):
+            print (user)
+            if(user is None):
                 user=Users.query.filter(Users.username==mail_or_uname).one_or_none()
-                if(user and bcrypt.check_password_hash(user.password,password)):
-                    return jsonify({
-                        "success":True,
-                        "status":200,
-                        "jwt":223,
-                        "user":user.username
-                    })
+                if(user is not None):
+                    if(bcrypt.check_password_hash(user.password,password)):
+                        return jsonify({
+                            "success":True,
+                            "status":200,
+                            "jwt":223,
+                            "user":user.username
+                        }),200
+                    else:
+                        return(jsonify({
+                        "success":False,
+                        "status":403,
+                        "message":"unauthorised"
+                    })),403
                 else:
-                    abort(404)
-            elif(bcrypt.check_password_hash(user.password,password)):
+                    return(jsonify({
+                        "success":False,
+                        "status":404,
+                        "message":"user does not exist"
+                    })),404
+            if(bcrypt.check_password_hash(user.password,password)):
                 return jsonify({
                     "success":True,
                     "status":200,
@@ -85,4 +98,8 @@ def create_app(test_config=None):
         except:
             abort(400)
 
+    @app.route('/user/pay',methods=['POST'])
+    def pay_user():
+        pass
+    return app
 

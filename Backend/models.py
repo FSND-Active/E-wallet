@@ -36,6 +36,7 @@ class Users(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    transactions= db.relationship('UserTransactions',backref='users',lazy=True)
 
     def __init__(self, id, first_name, last_name, email, username, password):
         self.id = id
@@ -87,7 +88,7 @@ class UserDetails(db.Model):
     address = db.Column(db.String, nullable=False)
     verification_id = db.Column(db.String(20), nullable=False)
     utility_bill = db.Column(db.String(50), nullable=False)
-    user = db.relationship('User', backref='users_details', lazy=True)
+    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=True)
 
     def __init__(self, id, gender, date_of_birth, phone_number, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
         self.id = id
@@ -192,7 +193,7 @@ class CompanyDetails(db.Model):
     address = db.Column(db.String, nullable=False)
     verification_id = db.Column(db.String(20), nullable=False)
     utility_bill = db.Column(db.String(50), nullable=False)
-    company = db.relationship('Company', backref='company_details', lazy=True)
+    company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=True)
 
     def __init__(self, id, gender, date_of_registration, nature_of_business, phone_number, country, state, city, zip_code, address, verification_id, utility_bill):
         self.id = id
@@ -245,7 +246,7 @@ class UserWallet(db.Model):
     __tablename__ = "user_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    user = db.relationship('User', backref='users_details', lazy=True)
+    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
     
 
     def __init__(self, id, balance):
@@ -280,7 +281,7 @@ class CompanyWallet(db.Model):
     __tablename__ = "company_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    company = db.relationship('Company', backref='company_details', lazy=True)
+    company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
 
 
     def __init__(self, id, balance):
@@ -313,7 +314,7 @@ User Transactions
 
 
 class UserTransactions(db.Model):
-    __tablename__ = "users_transactions"
+    __tablename__ = "user_transactions"
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String, nullable=False)
     type = db.Column(db.String, nullable=False)
@@ -321,7 +322,7 @@ class UserTransactions(db.Model):
     status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
-    user = db.relationship('User', backref='users_transactions', lazy=True)
+    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
 
 
 
@@ -372,7 +373,7 @@ class CompanyTransactions(db.Model):
     status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
-    company = db.relationship('Company', backref='company_transactions', lazy=True)
+    company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
 
     def __init__(self, id, description, type, amount, status, date, time):
         self.id = id
