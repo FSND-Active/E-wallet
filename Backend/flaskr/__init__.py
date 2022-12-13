@@ -111,6 +111,18 @@ def create_app(test_config=None):
         try:
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
+            if (sender_wallet or to_wallet is None):
+                return jsonify({
+                    "success":False,
+                    "status":404,
+                    "message":"User wallet not found"
+                }),404
+            if (sender_wallet.balance<amount):
+                return jsonify({
+                    "success":False,
+                    "status":404,
+                    "message":"Insufficient Balance"
+                }),404
             wallet1=sender_wallet(balance=sender_wallet.balance-amount)
             wallet2=to_wallet(balance=to_wallet.balance+amount)
 
