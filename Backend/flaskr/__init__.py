@@ -37,9 +37,10 @@ def create_app(test_config=None):
         email=str(req.get("email"))
         uname=str(req.get("username"))
         password=str(req.get("password"))
+        print(fname,lname,email,uname,password)
         if(fname is None or lname is None or email is None or uname is None or password is None):
             abort(400)
-        if(Users.query.filter(Users.email==email)):
+        if(Users.query.filter(Users.email==email).one_or_none() or Users.query.filter(Users.username==uname).one_or_none()):
             return jsonify({
                 "success":False,
                 "message":"Sorry user already exists",
@@ -47,11 +48,15 @@ def create_app(test_config=None):
             }),403
         try:
             pw_hash= bcrypt.generate_password_hash(password).decode('utf-8')
+            print(pw_hash)
             user=Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
-            wallet=UserWallet(balance=int(0))
-            user.insert()
+            print(user)
+
+            
+            wallet=UserWallet(balance=int(0),user=email)
             
             wallet.insert()
+            user.insert()
             return jsonify({
                 "success":True,
                 "status":200,
@@ -59,6 +64,9 @@ def create_app(test_config=None):
                 "message":""
             }),200
         except:
+            db.session.rollback()
+            db.session.close()
+            print(sys.exc_info())
             abort(400)
 
     @app.route("/users/login",methods=["POST"])
@@ -105,7 +113,7 @@ def create_app(test_config=None):
         except:
             abort(400)
     #@verify_jwt_auth()
-    @app.route('/user/pay',methods=['POST'])
+    @app.route('/users/pay',methods=['POST'])
     def pay_user():
         req= request.get_json()
         to=str(req.get("unam_or_mail"))
@@ -114,7 +122,7 @@ def create_app(test_config=None):
         try:
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
-            if (sender_wallet or to_wallet is None):
+            if (sender_wallet is None or to_wallet is None):
                 return jsonify({
                     "success":False,
                     "status":404,
@@ -144,6 +152,8 @@ def create_app(test_config=None):
                 "message":sender_receipt.format()
             }),200
         except:
+            sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
+            to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
             sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=False,
             date=datetime.date.today(),time=datetime.time,user=sender_wallet.email)
             sender_receipt.update()
@@ -159,7 +169,7 @@ def create_app(test_config=None):
             "status": 404,
             "success": False,
             "message": "resource not found"
-        })
+        }),404
 
     @app.errorhandler(422)
     def cant_process(error):
@@ -167,7 +177,7 @@ def create_app(test_config=None):
             "status": 422,
             "success": False,
             "message": "Request unprocessable"
-        })
+        }),422
 
     @app.errorhandler(400)
     def bad_request(error):
@@ -175,7 +185,7 @@ def create_app(test_config=None):
             "status": 400,
             "success": False,
             "message": "Bad Request"
-        })
+        }),400
 
     @app.errorhandler(500)
     def server_error(error):
@@ -183,7 +193,7 @@ def create_app(test_config=None):
             "status": 500,
             "success": False,
             "message": "Internal server error"
-        })
+        }),500
     return app
 
 

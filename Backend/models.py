@@ -38,8 +38,7 @@ class Users(db.Model):
     password = db.Column(db.String, nullable=False)
     transactions= db.relationship('UserTransactions',backref='users',lazy=True)
 
-    def __init__(self, id, first_name, last_name, email, username, password):
-        self.id = id
+    def __init__(self, first_name, last_name, email, username, password):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -59,7 +58,6 @@ class Users(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
@@ -88,10 +86,9 @@ class UserDetails(db.Model):
     address = db.Column(db.String, nullable=False)
     verification_id = db.Column(db.String(20), nullable=False)
     utility_bill = db.Column(db.String(50), nullable=False)
-    user = db.Column(db.String,db.ForeignKey('users.email'),nullable=True)
+    # user = db.Column(db.String,db.ForeignKey('users.email'),nullable=True)
 
-    def __init__(self, id, gender, date_of_birth, phone_number, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
-        self.id = id
+    def __init__(self, gender, date_of_birth, phone_number, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
         self.gender = gender
         self.date_of_birth = date_of_birth
         self.phone_number = phone_number
@@ -117,7 +114,6 @@ class UserDetails(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "gender": self.gender,
             "date_of_birth": self.date_of_birth,
             "phone_number": self.phone_number,
@@ -139,15 +135,15 @@ Companies
 
 
 class Companies(db.Model):
-    __tablename__ = "comapanies"
+    __tablename__ = "companies"
     id = db.Column(db.Integer, primary_key=True)
     company_name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    transactions= db.relationship('CompanyTransactions',backref='companies',lazy=True)
 
-    def __init__(self, id, company_name, email, username, password):
-        self.id = id
+    def __init__(self, company_name, email, username, password):
         self.company_name = company_name
         self.email = email
         self.username = username
@@ -166,7 +162,6 @@ class Companies(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "company_name": self.company_name,
             "email": self.email,
             "username": self.username,
@@ -193,10 +188,9 @@ class CompanyDetails(db.Model):
     address = db.Column(db.String, nullable=False)
     verification_id = db.Column(db.String(20), nullable=False)
     utility_bill = db.Column(db.String(50), nullable=False)
-    company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=True)
+    # company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=True)
 
-    def __init__(self, id, gender, date_of_registration, nature_of_business, phone_number, country, state, city, zip_code, address, verification_id, utility_bill):
-        self.id = id
+    def __init__(self, gender, date_of_registration, nature_of_business, phone_number, country, state, city, zip_code, address, verification_id, utility_bill):
         self.gender = gender
         self.date_of_registration = date_of_registration
         self.phone_number = phone_number
@@ -222,7 +216,6 @@ class CompanyDetails(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "date_of_registration": self.date_of_registration,
             "phone_number": self.phone_number,
             "nature_of_business": self.nature_of_business,
@@ -246,12 +239,12 @@ class UserWallet(db.Model):
     __tablename__ = "user_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    user = db.Column(db.String,db.ForeignKey('users.email'),nullable=False)
+    user = db.Column(db.String,nullable=False)
     
 
-    def __init__(self, id, balance):
-        self.id = id
+    def __init__(self, balance,user):
         self.balance = balance
+        self.user=user
 
     def insert(self):
         db.session.add(self)
@@ -266,8 +259,8 @@ class UserWallet(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
-            "balance": self.balance
+            "balance": self.balance,
+            "user":self.user
         }
 
 
@@ -281,11 +274,10 @@ class CompanyWallet(db.Model):
     __tablename__ = "company_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
+    # company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
 
 
-    def __init__(self, id, balance):
-        self.id = id
+    def __init__(self, balance):
         self.balance = balance
 
     def insert(self):
@@ -301,7 +293,6 @@ class CompanyWallet(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "balance": self.balance
         }
 
@@ -326,8 +317,7 @@ class UserTransactions(db.Model):
 
 
 
-    def __init__(self, id, type, description, amount, status, date, time):
-        self.id = id
+    def __init__(self, type, description, amount, status, date, time):
         self.description = description
         self.type = type
         self.amount = amount
@@ -348,7 +338,6 @@ class UserTransactions(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "description": self.description,
             "type": self.type,
             "amount": self.amount,
@@ -375,8 +364,7 @@ class CompanyTransactions(db.Model):
     time = db.Column(db.Time, nullable=False)
     company = db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
 
-    def __init__(self, id, description, type, amount, status, date, time):
-        self.id = id
+    def __init__(self,description, type, amount, status, date, time):
         self.description = description
         self.type = type
         self.amount = amount
@@ -397,7 +385,6 @@ class CompanyTransactions(db.Model):
 
     def format(self):
         return {
-            "id": self.id,
             "description": self.description,
             "type": self.type,
             "amount": self.amount,
