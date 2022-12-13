@@ -88,7 +88,7 @@ class UserDetails(db.Model):
     address = db.Column(db.String, nullable=False)
     verification_id = db.Column(db.String(20), nullable=False)
     utility_bill = db.Column(db.String(50), nullable=False)
-    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=True)
+    user = db.Column(db.String,db.ForeignKey('users.email'),nullable=True)
 
     def __init__(self, id, gender, date_of_birth, phone_number, occupation, country, state, city, zip_code, address, verification_id, utility_bill):
         self.id = id
@@ -246,7 +246,7 @@ class UserWallet(db.Model):
     __tablename__ = "user_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
+    user = db.Column(db.String,db.ForeignKey('users.email'),nullable=False)
     
 
     def __init__(self, id, balance):
@@ -322,7 +322,7 @@ class UserTransactions(db.Model):
     status = db.Column(db.Boolean, nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
-    user = db.Column(db.Integer,db.ForeignKey('users.id'),nullable=False)
+    user = db.Column(db.String,db.ForeignKey('users.email'),nullable=False)
 
 
 

@@ -1,6 +1,8 @@
 from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
+import dateutil.parser
+import datetime
 from models import *
 import sys
 
@@ -46,13 +48,15 @@ def create_app(test_config=None):
             }),403
         try:
             pw_hash= bcrypt.generate_password_hash(password).decode('utf-8')
-            Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
-            Users.insert()
+            user=Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
+            user.insert()
+            wallet=UserWallet(balance=int(0))
+            wallet.insert()
             return jsonify({
                 "success":True,
                 "status":200,
                 "email":email
-            })
+            }),200
         except:
             abort(400)
 
@@ -75,31 +79,62 @@ def create_app(test_config=None):
                             "user":user.username
                         }),200
                     else:
-                        return(jsonify({
+                        return jsonify({
                         "success":False,
                         "status":403,
                         "message":"unauthorised"
-                    })),403
+                    }),403
                 else:
-                    return(jsonify({
+                    return jsonify({
                         "success":False,
                         "status":404,
                         "message":"user does not exist"
-                    })),404
+                    }),404
             if(bcrypt.check_password_hash(user.password,password)):
                 return jsonify({
                     "success":True,
                     "status":200,
                     "jwt":223,
                     "user":user.email
-                })
+                }),200
             else:
                 abort(404)
         except:
             abort(400)
-
+    #@verify_jwt_auth()
     @app.route('/user/pay',methods=['POST'])
     def pay_user():
-        pass
+        req= request.get_json()
+        to=str(req.get("unam_or_mail"))
+        amount=req.get('amount')
+        sender=req.get('sender')# will change this to get email from verified jwt
+        try:
+            sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
+            to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
+            wallet1=sender_wallet(balance=sender_wallet.balance-amount)
+            wallet2=to_wallet(balance=to_wallet.balance+amount)
+
+            sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=True,
+            date=datetime.date.today(),time=datetime.time,user=sender_wallet.email)
+
+            to_receipt=UserTransactions(type="Credit",description=sender_wallet.email,amount=amount,status=True,
+            date=datetime.date.today(),time=datetime.time,user=to_wallet.email)
+            wallet1.update()
+            wallet2.update()
+            sender_receipt.update()
+            to_receipt.update()
+            return jsonify({
+                "success":True,
+                "status":200,
+                "receipt":sender_receipt.format()
+            }),200
+        except:
+            sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=False,
+            date=datetime.date.today(),time=datetime.time,user=sender_wallet.email)
+            sender_receipt.update()
+            return jsonify({
+                "success":False,
+                "status":500
+            }),500
     return app
 
