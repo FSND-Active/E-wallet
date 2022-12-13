@@ -112,13 +112,15 @@ def create_app(test_config=None):
                 abort(404)
         except:
             abort(400)
+
+
     #@verify_jwt_auth()
     @app.route('/users/pay',methods=['POST'])
     def pay_user():
         req= request.get_json()
         to=str(req.get("unam_or_mail"))
-        amount=req.get('amount')
-        sender=req.get('sender')# will change this to get email from verified jwt
+        amount=int(req.get('amount'))
+        sender=str(req.get('sender'))# will change this to get email from verified jwt
         try:
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
@@ -134,29 +136,35 @@ def create_app(test_config=None):
                     "status":404,
                     "message":"Insufficient Balance"
                 }),404
-            wallet1=sender_wallet(balance=sender_wallet.balance-amount)
-            wallet2=to_wallet(balance=to_wallet.balance+amount)
+         
+            sender_wallet.balance=sender_wallet.balance-amount
+            to_wallet.balance=to_wallet.balance+amount
+    
+            sender_receipt=UserTransactions(type="Debit",description=to_wallet.user,amount=amount,status=True,
+            date=datetime.date.today(),time=datetime.time,user=sender_wallet.user)
 
-            sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=True,
-            date=datetime.date.today(),time=datetime.time,user=sender_wallet.email)
+            to_receipt=UserTransactions(type="Credit",description=sender_wallet.user,amount=amount,status=True,
+            date=datetime.date.today(),time=datetime.time,user=to_wallet.user)
+            print(sender_receipt.format(),to_receipt.format())
 
-            to_receipt=UserTransactions(type="Credit",description=sender_wallet.email,amount=amount,status=True,
-            date=datetime.date.today(),time=datetime.time,user=to_wallet.email)
-            wallet1.update()
-            wallet2.update()
+            sender_wallet.update()
+            to_wallet.update()
             sender_receipt.update()
             to_receipt.update()
+            receipt=sender_receipt.format()
             return jsonify({
                 "success":True,
                 "status":200,
-                "message":sender_receipt.format()
+                "message":receipt
             }),200
         except:
+            db.session.rollback()
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
-            sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=False,
-            date=datetime.date.today(),time=datetime.time,user=sender_wallet.email)
+            sender_receipt=UserTransactions(type="Debit",description=to_wallet.user,amount=amount,status=False,
+            date=datetime.date.today(),time=datetime.time,user=sender_wallet.user)
             sender_receipt.update()
+            print(sys.exc_info())
             return jsonify({
                 "success":False,
                 "status":500,

@@ -317,13 +317,14 @@ class UserTransactions(db.Model):
 
 
 
-    def __init__(self, type, description, amount, status, date, time):
+    def __init__(self, type, description, amount, status, date, time,user):
         self.description = description
         self.type = type
         self.amount = amount
         self.status = status
         self.date = date
         self.time = time
+        self.user=user
 
     def insert(self):
         db.session.add(self)
