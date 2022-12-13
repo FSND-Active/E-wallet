@@ -1,7 +1,6 @@
 from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-import dateutil.parser
 import datetime
 from models import *
 import sys
