@@ -1,7 +1,8 @@
 from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-import datetime
+from datetime import datetime
+
 from models import *
 import sys
 
@@ -141,11 +142,11 @@ def create_app(test_config=None):
             to_wallet.balance=to_wallet.balance+amount
     
             sender_receipt=UserTransactions(type="Debit",description=to_wallet.user,amount=amount,status=True,
-            date=datetime.date.today(),time=datetime.time,user=sender_wallet.user)
+            date=datetime.utcnow().date(),time=datetime.utcnow().time(),user=sender_wallet.user)
 
             to_receipt=UserTransactions(type="Credit",description=sender_wallet.user,amount=amount,status=True,
-            date=datetime.date.today(),time=datetime.time,user=to_wallet.user)
-            print(sender_receipt.format(),to_receipt.format())
+            date=datetime.utcnow().date(),time=datetime.utcnow().time(),user=to_wallet.user)
+            
 
             sender_wallet.update()
             to_wallet.update()
@@ -162,14 +163,14 @@ def create_app(test_config=None):
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
             sender_receipt=UserTransactions(type="Debit",description=to_wallet.user,amount=amount,status=False,
-            date=datetime.date.today(),time=datetime.time,user=sender_wallet.user)
+            date=datetime.utcnow().date(),time=datetime.utcnow().time(),user=sender_wallet.user)
             sender_receipt.update()
             print(sys.exc_info())
             return jsonify({
                 "success":False,
-                "status":500,
+                "status":422,
                 "message":"An error occured"
-            }),500
+            }),422
 
     @app.errorhandler(404)
     def resource_not_found(error):
