@@ -49,13 +49,15 @@ def create_app(test_config=None):
         try:
             pw_hash= bcrypt.generate_password_hash(password).decode('utf-8')
             user=Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
-            user.insert()
             wallet=UserWallet(balance=int(0))
+            user.insert()
+            
             wallet.insert()
             return jsonify({
                 "success":True,
                 "status":200,
-                "email":email
+                "email":email,
+                "message":""
             }),200
         except:
             abort(400)
@@ -76,7 +78,8 @@ def create_app(test_config=None):
                             "success":True,
                             "status":200,
                             "jwt":223,
-                            "user":user.username
+                            "user":user.username,
+                            "message":""
                         }),200
                     else:
                         return jsonify({
@@ -95,7 +98,8 @@ def create_app(test_config=None):
                     "success":True,
                     "status":200,
                     "jwt":223,
-                    "user":user.email
+                    "user":user.email,
+                    "message":""
                 }),200
             else:
                 abort(404)
@@ -138,7 +142,7 @@ def create_app(test_config=None):
             return jsonify({
                 "success":True,
                 "status":200,
-                "receipt":sender_receipt.format()
+                "message":sender_receipt.format()
             }),200
         except:
             sender_receipt=UserTransactions(type="Debit",description=to_wallet.email,amount=amount,status=False,
@@ -146,7 +150,41 @@ def create_app(test_config=None):
             sender_receipt.update()
             return jsonify({
                 "success":False,
-                "status":500
+                "status":500,
+                "message":"An error occured"
             }),500
+
+    @app.errorhandler(404)
+    def resource_not_found(error):
+        return jsonify({
+            "status": 404,
+            "success": False,
+            "message": "resource not found"
+        })
+
+    @app.errorhandler(422)
+    def cant_process(error):
+        return jsonify({
+            "status": 422,
+            "success": False,
+            "message": "Request unprocessable"
+        })
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "status": 400,
+            "success": False,
+            "message": "Bad Request"
+        })
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({
+            "status": 500,
+            "success": False,
+            "message": "Internal server error"
+        })
     return app
+
 
