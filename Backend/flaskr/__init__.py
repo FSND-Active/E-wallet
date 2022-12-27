@@ -13,6 +13,7 @@ def create_app(test_config=None):
     CORS(app)
     bcrypt=Bcrypt(app)
 
+    SALT=os.getenv("SALT")
 
     @app.after_request
     def after_request(response):
@@ -39,7 +40,6 @@ def create_app(test_config=None):
         email=req.get("email")
         uname=req.get("username")
         password=req.get("password")
-        print(fname,lname,email,uname,password)
         if None in [fname,lname,email,uname,password]:
             abort(400)
         if(Users.query.filter(Users.email==email).one_or_none() or Users.query.filter(Users.username==uname).one_or_none()):
@@ -49,8 +49,7 @@ def create_app(test_config=None):
                 "status":403
             }),403
         try:
-            pw_hash= bcrypt.generate_password_hash(password).decode('utf-8')
-            print(pw_hash)
+            pw_hash= bcrypt.generate_password_hash(password+SALT).decode('utf-8')
             user=Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
             print(user)
 
@@ -81,7 +80,7 @@ def create_app(test_config=None):
             if(user is None):
                 user=Users.query.filter(Users.username==mail_or_uname).one_or_none()
                 if(user is not None):
-                    if(bcrypt.check_password_hash(user.password,password)):
+                    if(bcrypt.check_password_hash(user.password,password+SALT)):
                         return jsonify({
                             "success":True,
                             "status":200,
@@ -101,7 +100,7 @@ def create_app(test_config=None):
                         "status":404,
                         "message":"user does not exist"
                     }),404
-            if(bcrypt.check_password_hash(user.password,password)):
+            if(bcrypt.check_password_hash(user.password,password+SALT)):
                 return jsonify({
                     "success":True,
                     "status":200,
@@ -112,7 +111,6 @@ def create_app(test_config=None):
             else:
                 abort(404)
         except:
-            print(sys.exc_info())
             abort(400)
 
 
@@ -176,13 +174,17 @@ def create_app(test_config=None):
             sender_receipt=UserTransactions(type="Debit",description=to_wallet.user,amount=amount,status=False,
             date=datetime.utcnow().date().isoformat(),time=datetime.utcnow().time().isoformat(),user=sender_wallet.user)
             sender_receipt.update()
-            print(sys.exc_info())
             
             return jsonify({
                 "success":False,
                 "status":422,
                 "message":"An error occured"
             }),422
+
+
+    @app.route("/users/logout",methods=["POST"])
+    def user_logout():
+        pass
 
 
     @app.errorhandler(404)
