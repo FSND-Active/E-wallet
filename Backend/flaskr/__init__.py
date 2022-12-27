@@ -1,12 +1,11 @@
 from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from datetime import datetime,timedelta
-from functools import wraps
+from datetime import datetime
+from auth.auth import AuthError,encode_jwt,requires_auth
 
 from models import *
 import sys
-import jwt
 
 def create_app(test_config=None):
     app=Flask(__name__)
@@ -84,16 +83,10 @@ def create_app(test_config=None):
                 user=Users.query.filter(Users.username==mail_or_uname).one_or_none()
                 if(user is not None):
                     if(bcrypt.check_password_hash(user.password,password)):
-                        payload= {
-                            "email":user.email,
-                            "permission":["get:user","post:user"],
-                            "exp":datetime.utcnow() + timedelta(minutes=60),
-                            "iat":datetime.utcnow()
-                        }
                         return jsonify({
                             "success":True,
                             "status":200,
-                            "jwt":jwt.encode(payload,os.getenv("KEY"),"HS256"),
+                            "jwt":encode_jwt(user.email,["get:users","post:users"]),
                             "user":user.username,
                             "message":""
                         }),200
@@ -110,16 +103,10 @@ def create_app(test_config=None):
                         "message":"user does not exist"
                     }),404
             if(bcrypt.check_password_hash(user.password,password)):
-                payload= {
-                    "email":user.email,
-                    "permission":["get:user","post:user"],
-                    "exp":datetime.utcnow() + timedelta(minutes=60),
-                    "iat":datetime.utcnow()
-                }
                 return jsonify({
                     "success":True,
                     "status":200,
-                    "jwt":jwt.encode(payload,os.getenv("KEY"),"HS256"),
+                    "jwt":encode_jwt(user.email,["get:users","post:users"]),
                     "user":user.email,
                     "message":""
                 }),200
@@ -129,14 +116,14 @@ def create_app(test_config=None):
             abort(400)
 
 
-    #@verify_jwt_auth()
     @app.route('/users/pay',methods=['POST'])
-    def pay_user():
+    @requires_auth("post:users")
+    def pay_user(payload):
         try:
             req= request.get_json()
             to=str(req.get("unam_or_mail"))
             amount=int(req.get('amount'))
-            sender=str(req.get('sender'))# will change this to get email from verified jwt
+            sender=str(payload["email"])
             if (amount==0 or None in [to,amount,sender]):
                 return jsonify({
                     "message":"invalid input",
@@ -197,6 +184,7 @@ def create_app(test_config=None):
                 "message":"An error occured"
             }),422
 
+
     @app.errorhandler(404)
     def resource_not_found(error):
         return jsonify({
@@ -204,6 +192,7 @@ def create_app(test_config=None):
             "success": False,
             "message": "resource not found"
         }),404
+
 
     @app.errorhandler(422)
     def cant_process(error):
@@ -213,6 +202,7 @@ def create_app(test_config=None):
             "message": "Request unprocessable"
         }),422
 
+
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({
@@ -221,6 +211,7 @@ def create_app(test_config=None):
             "message": "Bad Request"
         }),400
 
+
     @app.errorhandler(500)
     def server_error(error):
         return jsonify({
@@ -228,6 +219,15 @@ def create_app(test_config=None):
             "success": False,
             "message": "Internal server error"
         }),500
+
+
+    @app.errorhandler(AuthError)
+    def get_auth_error(error):
+        return jsonify({
+            "success": False,
+            "status": error.status_code,
+            "message": error.error
+        }), error.status_code
     return app
 
 
