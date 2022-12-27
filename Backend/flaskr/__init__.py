@@ -1,10 +1,12 @@
 from flask import Flask, request,jsonify,abort
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime,timedelta
+from functools import wraps
 
 from models import *
 import sys
+import jwt
 
 def create_app(test_config=None):
     app=Flask(__name__)
@@ -82,10 +84,16 @@ def create_app(test_config=None):
                 user=Users.query.filter(Users.username==mail_or_uname).one_or_none()
                 if(user is not None):
                     if(bcrypt.check_password_hash(user.password,password)):
+                        payload= {
+                            "email":user.email,
+                            "permission":["get:user","post:user"],
+                            "exp":datetime.utcnow() + timedelta(minutes=60),
+                            "iat":datetime.utcnow()
+                        }
                         return jsonify({
                             "success":True,
                             "status":200,
-                            "jwt":223,
+                            "jwt":jwt.encode(payload,os.getenv("KEY"),"HS256"),
                             "user":user.username,
                             "message":""
                         }),200
@@ -102,10 +110,16 @@ def create_app(test_config=None):
                         "message":"user does not exist"
                     }),404
             if(bcrypt.check_password_hash(user.password,password)):
+                payload= {
+                    "email":user.email,
+                    "permission":["get:user","post:user"],
+                    "exp":datetime.utcnow() + timedelta(minutes=60),
+                    "iat":datetime.utcnow()
+                }
                 return jsonify({
                     "success":True,
                     "status":200,
-                    "jwt":223,
+                    "jwt":jwt.encode(payload,os.getenv("KEY"),"HS256"),
                     "user":user.email,
                     "message":""
                 }),200
@@ -147,7 +161,7 @@ def create_app(test_config=None):
                     "status":404,
                     "message":"Insufficient Balance"
                 }),404
-         
+        
             sender_wallet.balance=sender_wallet.balance-amount
             to_wallet.balance=to_wallet.balance+amount
     
