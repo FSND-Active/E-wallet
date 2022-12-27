@@ -34,13 +34,13 @@ def create_app(test_config=None):
     @app.route("/users/register",methods=["POST"])
     def register_user():
         req= request.get_json()
-        fname=str(req.get("first_name"))
-        lname=str(req.get("last_name"))
-        email=str(req.get("email"))
-        uname=str(req.get("username"))
-        password=str(req.get("password"))
+        fname=req.get("first_name")
+        lname=req.get("last_name")
+        email=req.get("email")
+        uname=req.get("username")
+        password=req.get("password")
         print(fname,lname,email,uname,password)
-        if(fname is None or lname is None or email is None or uname is None or password is None):
+        if None in [fname,lname,email,uname,password]:
             abort(400)
         if(Users.query.filter(Users.email==email).one_or_none() or Users.query.filter(Users.username==uname).one_or_none()):
             return jsonify({
@@ -78,7 +78,6 @@ def create_app(test_config=None):
         password=str(req.get("password"))
         try:
             user=Users.query.filter(Users.email==mail_or_uname).one_or_none()
-            print (user)
             if(user is None):
                 user=Users.query.filter(Users.username==mail_or_uname).one_or_none()
                 if(user is not None):
@@ -86,7 +85,7 @@ def create_app(test_config=None):
                         return jsonify({
                             "success":True,
                             "status":200,
-                            "jwt":encode_jwt(user.email,["get:users","post:users"]),
+                            "jwt":encode_jwt(user.email,["get:users","post:users"]).decode("ASCII"),
                             "user":user.username,
                             "message":""
                         }),200
@@ -106,13 +105,14 @@ def create_app(test_config=None):
                 return jsonify({
                     "success":True,
                     "status":200,
-                    "jwt":encode_jwt(user.email,["get:users","post:users"]),
+                    "jwt":encode_jwt(user.email,["get:users","post:users"]).decode("ASCII"),
                     "user":user.email,
                     "message":""
                 }),200
             else:
                 abort(404)
         except:
+            print(sys.exc_info())
             abort(400)
 
 
@@ -124,7 +124,7 @@ def create_app(test_config=None):
             to=str(req.get("unam_or_mail"))
             amount=int(req.get('amount'))
             sender=str(payload["email"])
-            if (amount==0 or None in [to,amount,sender]):
+            if (amount==0 or None in [sender,to,amount] or to ==sender):
                 return jsonify({
                     "message":"invalid input",
                     "status":403,
@@ -136,7 +136,7 @@ def create_app(test_config=None):
         try:
             sender_wallet=UserWallet.query.filter(UserWallet.user==sender).one_or_none()
             to_wallet=UserWallet.query.filter(UserWallet.user==to).one_or_none()
-            if (sender_wallet is None or to_wallet is None):
+            if (None in [sender_wallet, to_wallet]):
                 return jsonify({
                     "success":False,
                     "status":404,
@@ -193,6 +193,14 @@ def create_app(test_config=None):
             "message": "resource not found"
         }),404
 
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            "status":405,
+            "message":"Method is not allowed",
+            "success":False
+        }),405
 
     @app.errorhandler(422)
     def cant_process(error):
