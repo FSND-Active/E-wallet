@@ -184,7 +184,7 @@ def create_app(test_config=None):
 
     @app.route("/users/logout",methods=["POST"])
     def user_logout():
-        pass
+        res=request.get_json()
 
 
     @app.errorhandler(404)

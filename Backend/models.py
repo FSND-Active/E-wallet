@@ -393,3 +393,21 @@ class CompanyTransactions(db.Model):
             "date": self.date,
             "time": self.time
         }
+
+
+class BlacklistToken(db.Model):
+    __tablename__="blacklist_token"
+
+    id= db.Column(db.Integer,primary_key=True,autoincrement=True)
+    token=db.Column(db.String(600),nullable=False,unique=True)
+    log_date=db.Column(db.DateTime,nullable=False)
+
+    def __init__(self,token,log_date):
+        self.token=token
+        self.log_date=log_date
+    
+    def format(self):
+        return ({
+            "token":self.token,
+            "log_date":self.log_date
+        })

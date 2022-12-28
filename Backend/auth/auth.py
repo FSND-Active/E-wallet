@@ -1,6 +1,7 @@
 from flask import request
 from functools import wraps
 from datetime import datetime,timedelta
+from models import BlacklistToken
 import jwt
 import os
 
@@ -14,6 +15,14 @@ class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error=error
         self.status_code= status_code
+
+
+def check_blacklist_token(token:str):
+    res= BlacklistToken.query.filter_by(token=token).first()
+    if res:
+        raise AuthError("Session expired",401)
+    return
+
 
 # encode jwt
 '''
@@ -92,7 +101,7 @@ def verify_decode_jwt(token):
         payload= jwt.decode(token,os.getenv("KEY",))
         return payload
     except jwt.ExpiredSignatureError:
-        raise AuthError("token_expired",401)
+        raise AuthError("session_expired",401)
     except jwt.InvalidTokenError:
         raise AuthError("Invalid token",401)
     except Exception:
@@ -115,8 +124,10 @@ def requires_auth(permission=""):
         @wraps(f)
         def wrapper(*args,**kwargs):
             token= get_token_auth_header()
+            check_blacklist_token(token)
             payload= verify_decode_jwt(token)
             check_permissions(permission,payload)
             return f(payload,*args,**kwargs)
         return wrapper
     return requires_auth_decorator
+
