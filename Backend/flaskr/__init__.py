@@ -58,8 +58,7 @@ def create_app(test_config=None):
                 "status": 403
             }), 403
         try:
-            pw_hash = bcrypt.generate_password_hash(
-                password+SALT).decode('utf-8')
+            pw_hash = bcrypt.generate_password_hash(password+SALT).decode('utf-8')
             user = Users(first_name=fname, last_name=lname,email=email, username=uname, password=pw_hash)
 
             wallet = UserWallet(balance=int(0), user=email)
