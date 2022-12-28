@@ -114,6 +114,7 @@ def verify_decode_jwt(token):
         permission: string permission (i.e. 'post:drink')
 
     it should use the get_token_auth_header method to get the token
+    it should check if token is black listed
     it should use the verify_decode_jwt method to decode the jwt
     it should use the check_permissions method to check the requested permission
     return the decorator which passes the decoded payload to the decorated method
