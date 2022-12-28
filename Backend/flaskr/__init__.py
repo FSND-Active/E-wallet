@@ -51,7 +51,6 @@ def create_app(test_config=None):
         try:
             pw_hash= bcrypt.generate_password_hash(password+SALT).decode('utf-8')
             user=Users(first_name=fname,last_name=lname,email=email,username=uname,password=pw_hash)
-            print(user)
 
             
             wallet=UserWallet(balance=int(0),user=email)
@@ -70,6 +69,7 @@ def create_app(test_config=None):
             print(sys.exc_info())
             abort(400)
 
+
     @app.route("/users/login",methods=["POST"])
     def user_login():
         req= request.get_json()
@@ -85,7 +85,7 @@ def create_app(test_config=None):
                             "success":True,
                             "status":200,
                             "jwt":encode_jwt(user.email,["get:users","post:users"]).decode("ASCII"),
-                            "user":user.username,
+                            "user":user.format(),
                             "message":""
                         }),200
                     else:
@@ -105,7 +105,7 @@ def create_app(test_config=None):
                     "success":True,
                     "status":200,
                     "jwt":encode_jwt(user.email,["get:users","post:users"]).decode("ASCII"),
-                    "user":user.email,
+                    "user":user.format(),
                     "message":""
                 }),200
             else:
@@ -180,6 +180,65 @@ def create_app(test_config=None):
                 "status":422,
                 "message":"An error occured"
             }),422
+
+
+    @app.routes("/users/balance",methods=["GET"])
+    @requires_auth("get:users")
+    def get_user_balance(payload):
+        mail= payload["email"]
+        try:
+            res=UserWallet.query.filter_by(user=mail).one_or_none()
+            if res is None:
+                abort(404)
+            return jsonify({
+                "status":200,
+                "success":True,
+                "balance":res.balance
+            })
+        except:
+            abort(422)
+
+
+    @app.route("/users/transactions",methods=["GET"])
+    @requires_auth("get:users")
+    def get_users_transactions(payload):
+        mail= payload["email"]
+        try:
+            transactions=UserTransactions.query.filter(user=mail).all()
+            if transactions is None:
+                abort(404)
+            return jsonify({
+                "status":200,
+                "success":True,
+                "tansactions":{transaction.format() for transaction in transactions},
+                "user":mail
+            })
+        except:
+            abort(422)
+
+
+    @app.route("/users/details",methods=["GET"])
+    @requires_auth("get:users")
+    def get_user_details(payload):
+        mail= payload["email"]
+        personal_detail=None
+        try:
+            detail= UserDetails.query.filter(user=mail).one_or_none()
+            user= Users.query.filter(email=mail).one_or_none()
+            if user is None:
+                abort(404)
+            if detail:
+                personal_detail=detail.format()
+                del personal_detail["utility_bill"] 
+            
+            return jsonify({
+                "status":200,
+                "success":True,
+                "user":user.format(),
+                "personal_details":personal_detail
+            })
+        except:
+            abort(422)
 
 
     @app.route("/users/logout",methods=["POST"])

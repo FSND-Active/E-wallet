@@ -61,8 +61,7 @@ class Users(db.Model):
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
-            "username": self.username,
-            "password": self.password
+            "username": self.username
         }
 
 
@@ -164,8 +163,7 @@ class Companies(db.Model):
         return {
             "company_name": self.company_name,
             "email": self.email,
-            "username": self.username,
-            "password": self.password
+            "username": self.username
         }
 
 
