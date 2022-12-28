@@ -75,7 +75,6 @@ def create_app(test_config=None):
         except:
             db.session.rollback()
             db.session.close()
-            print(sys.exc_info())
             abort(400)
 
     @app.route("/users/login", methods=["POST"])
@@ -190,7 +189,7 @@ def create_app(test_config=None):
                 "message": "An error occured"
             }), 422
 
-    @app.routes("/users/balance", methods=["GET"])
+    @app.route("/users/balance", methods=["GET"])
     @requires_auth("get:users")
     def get_user_balance(payload):
         mail = payload["email"]
