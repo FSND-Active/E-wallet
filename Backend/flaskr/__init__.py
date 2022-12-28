@@ -183,8 +183,21 @@ def create_app(test_config=None):
 
 
     @app.route("/users/logout",methods=["POST"])
-    def user_logout():
-        res=request.get_json()
+    @requires_auth("post:users")
+    def user_logout(payload):
+        req=request.get_json()
+        token= req.get("token")
+        try:
+            blacklist=BlacklistToken(token=token,log_date=datetime.utcnow())
+            blacklist.insert()
+            return jsonify({
+                "status":200,
+                "success":True,
+                "user":payload["email"],
+                "message":""
+            })
+        except:
+            abort(422)
 
 
     @app.errorhandler(404)

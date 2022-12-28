@@ -405,6 +405,17 @@ class BlacklistToken(db.Model):
     def __init__(self,token,log_date):
         self.token=token
         self.log_date=log_date
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
     
     def format(self):
         return ({
