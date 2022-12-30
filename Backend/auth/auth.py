@@ -3,7 +3,7 @@ from functools import wraps
 from datetime import datetime,timedelta
 from models import BlacklistToken
 import jwt
-import os
+import os,sys
 
 # AuthError Exception
 '''
@@ -98,7 +98,7 @@ def check_permissions(permission,payload):
 
 def verify_decode_jwt(token):
     try:
-        payload= jwt.decode(token,os.getenv("KEY",))
+        payload= jwt.decode(token,os.getenv("KEY"),algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
         raise AuthError("session_expired",401)
