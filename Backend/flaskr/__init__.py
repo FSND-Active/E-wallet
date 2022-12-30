@@ -89,7 +89,6 @@ def create_app(test_config=None):
                 user = Users.query.filter(
                     Users.username == mail_or_uname).one_or_none()
                 if (user is not None):
-                    # print(bcrypt.check_password_hash(user.password, password+SALT))
                     if (bcrypt.check_password_hash(user.password, password+SALT)):
                         return jsonify({
                             "success": True,
@@ -125,7 +124,6 @@ def create_app(test_config=None):
                             "message": "unauthorised"
                         }), 403
         except:
-            print(sys.exc_info())
             abort(400)
 
     @app.route('/users/pay', methods=['POST'])
