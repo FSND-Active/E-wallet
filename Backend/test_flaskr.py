@@ -31,10 +31,10 @@ class WalletTestCase(unittest.TestCase):
         if Users.query.filter_by(email="test@email.com").first() is None:
             Users("testuser","testuser","test@email.com","test@email.com",bcrypt.generate_password_hash("test"+SALT).decode("utf-8")).insert()
         
-        if Users.query.filter_by(email="test@email.com").first() is None:
+        if Users.query.filter_by(email="test2@email.com").first() is None:
             Users("testuser2","testuser2","test2@email.com","test2@email.com",bcrypt.generate_password_hash("test2"+SALT).decode("utf-8")).insert()
-        self.testjwt=encode_jwt("test@gmail.com",["get:user","post:user"])
-        self.testjwt2=encode_jwt("test@gmail.com",["get:user","post:user"])
+        self.testjwt=encode_jwt("test@email.com",["get:users","post:users"])
+        self.testjwt2=encode_jwt("test2@email.com",["get:users","post:users"])
 
 
     def tearDown(self):
@@ -98,6 +98,33 @@ class WalletTestCase(unittest.TestCase):
         self.assertTrue(data["success"])
         self.assertTrue(isinstance(data["jwt"],str))
         self.assertTrue(res.status_code==200)
+
+    def test_get_user_balance(self):
+        '''it should return a valid users balance'''
+        '''it should fail if user has invalid loggedin token'''
+        res=self.client().get("/users/balance",headers={"Authorization": f"Bearer {self.testjwt.decode('ASCII')}invalidstring"})
+        data=json.loads(res.data)
+        self.assertTrue(res.status_code==401)
+        self.assertTrue(data["message"]=="Invalid token")
+        
+        '''it should fail if user in token deosnt exist'''
+        mock_jwt=encode_jwt("notexists@email.com",["get:users","post:users"])
+        res=self.client().get("/users/balance",headers={"Authorization": f"Bearer {mock_jwt.decode('ASCII')}"})
+        data=json.loads(res.data)
+        self.assertTrue(res.status_code==404)
+        self.assertTrue(data["message"]=="user does not exist")
+        
+        '''it should return balance of valid user'''
+
+        [wallet.delete() for wallet in UserWallet.query.filter_by(user="test@email.com" or "test2@email.com").all()]
+        UserWallet(50,"test@email.com").insert()
+
+        res= self.client().get("/users/balance",headers={"Authorization": f"Bearer {self.testjwt.decode('ASCII')}"})
+
+        [wallet.delete() for wallet in UserWallet.query.filter_by(user="test@email.com" or "test2@email.com").all()]
+        data=json.loads(res.data)
+        self.assertTrue(res.status_code==200)
+        self.assertTrue(data["balance"]==50)        
 
 
     
