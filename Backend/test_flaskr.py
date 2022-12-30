@@ -47,6 +47,22 @@ class WalletTestCase(unittest.TestCase):
     def test_hello(self):
         res = self.client().get("/")
         self.assertEqual(res.data.decode('UTF-8'), "hello world")
+
+    def test_register_user(self):
+        '''test error if form is empty'''
+        res= self.client().post("/users/register")
+        data= json.loads(res.data)
+        self.assertFalse(data["success"])
+        self.assertEqual(data["message"],"Bad Request")
+        self.assertEqual(res.status_code,400)
+        '''test register user'''
+        res= self.client().post("/users/register",json={"first_name":"test","last_name":"test",
+        "email":"test5@email.com","username":"test5","password":"test3"})
+        Users.query.filter_by(email="test5@email.com").one_or_none().delete()
+        data= json.loads(res.data)
+        self.assertTrue(res.status_code==200)
+        self.assertEqual(data["email"],"test5@email.com")
+
     
 
 
