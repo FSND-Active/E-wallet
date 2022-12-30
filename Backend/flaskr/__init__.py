@@ -219,7 +219,7 @@ def create_app(test_config=None):
     def get_users_transactions(payload):
         mail = payload["email"]
         try:
-            transactions = UserTransactions.query.filter(user=mail).all()
+            transactions = UserTransactions.query.filter_by(user=mail).all()
             if transactions is None:
                 abort(404)
             return jsonify({
@@ -237,8 +237,8 @@ def create_app(test_config=None):
         mail = payload["email"]
         personal_detail = None
         try:
-            detail = UserDetails.query.filter(user=mail).one_or_none()
-            user = Users.query.filter(email=mail).one_or_none()
+            detail = UserDetails.query.filter_by(user=mail).one_or_none()
+            user = Users.query.filter_by(email=mail).one_or_none()
             if user is None:
                 abort(404)
             if detail:
