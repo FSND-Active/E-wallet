@@ -39,7 +39,6 @@ def create_app(test_config=None):
 
     @app.route("/", methods=["GET"])
     def hello():
-        print("foo")
         return "hello world"
 
     @app.route("/users/register", methods=["POST"])
@@ -198,15 +197,21 @@ def create_app(test_config=None):
     def get_user_balance(payload):
         mail = payload["email"]
         try:
-            res = UserWallet.query.filter_by(user=mail).one_or_none()
+            res = UserWallet.query.filter_by(user=mail).one_or_none()  
             if res is None:
-                abort(404)
+                return jsonify({
+                    "status":404,
+                    "success":False,
+                    "message":"user does not exist"
+                }), 404
+
             return jsonify({
                 "status": 200,
                 "success": True,
                 "balance": res.balance
-            })
+            }), 200
         except:
+            print(sys.exc_info())
             abort(422)
 
     @app.route("/users/transactions", methods=["GET"])
@@ -222,7 +227,7 @@ def create_app(test_config=None):
                 "success": True,
                 "tansactions": paginate(request,transactions),
                 "user": mail
-            })
+            }), 200
         except:
             abort(422)
 
