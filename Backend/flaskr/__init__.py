@@ -39,6 +39,7 @@ def create_app(test_config=None):
 
     @app.route("/", methods=["GET"])
     def hello():
+        print("foo")
         return "hello world"
 
     @app.route("/users/register", methods=["POST"])
@@ -117,7 +118,11 @@ def create_app(test_config=None):
                     "message": ""
                 }), 200
             else:
-                abort(404)
+                return jsonify({
+                            "success": False,
+                            "status": 403,
+                            "message": "unauthorised"
+                        }), 403
         except:
             abort(400)
 
