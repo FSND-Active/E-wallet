@@ -2,13 +2,14 @@ import os
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
-
+from auth.auth import encode_jwt
 from flaskr import create_app
 from models import *
 
 
 class WalletTestCase(unittest.TestCase):
     """This class represents the Wallet test case"""
+    
 
     def setUp(self):
         """Define test variables and initialize app."""
@@ -24,10 +25,24 @@ class WalletTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
+        (Users("testuser","testuser","test@email.com","test@email.com","test").insert() 
+        if Users.query.filter_by(email="test@email.com").first() is None else 
+        Users("testuser2","testuser2","test2@email.com","test2@email.com","test2").insert() 
+        if Users.query.filter_by(email="test@email.com").first() is None else print())
+        self.testjwt=encode_jwt("test@gmail.com",["get:user","post:user"])
+        self.testjwt2=encode_jwt("test@gmail.com",["get:user","post:user"])
+
 
     def tearDown(self):
         """Executed after reach test"""
         pass
+    
+
+    def test_encode_jwt(self):
+        ''' test jwt is encoded and exists'''
+        self.assertTrue(self.testjwt and self.testjwt2)
+        self.assertTrue(isinstance(self.testjwt,bytes)and isinstance(self.testjwt2,bytes))
+
 
     def test_hello(self):
         res = self.client().get("/")
