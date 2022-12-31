@@ -37,6 +37,7 @@ class Users(db.Model):
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     transactions= db.relationship('UserTransactions',backref='users',lazy=True)
+    wallet=db.relationship('UserWallet',backref='users',lazy=True,cascade='all, delete-orphan')
 
     def __init__(self, first_name, last_name, email, username, password):
         self.first_name = first_name
@@ -237,7 +238,7 @@ class UserWallet(db.Model):
     __tablename__ = "user_wallet"
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Integer, nullable=False)
-    user = db.Column(db.String,nullable=False)
+    user = db.Column(db.String,db.ForeignKey("users.email"),nullable=False,unique=True)
     
 
     def __init__(self, balance,user):
