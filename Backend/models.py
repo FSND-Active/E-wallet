@@ -342,8 +342,8 @@ class UserTransactions(db.Model):
             "type": self.type,
             "amount": self.amount,
             "status": self.status,
-            "date": self.date,
-            "time": self.time
+            "date": self.date.isoformat(),
+            "time": self.time.isoformat()
         }
 
 

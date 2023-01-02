@@ -1,6 +1,7 @@
 import os
 import unittest
 import json
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from auth.auth import encode_jwt
 from flaskr import create_app
@@ -126,6 +127,36 @@ class WalletTestCase(unittest.TestCase):
         self.assertTrue(res.status_code==200)
         self.assertTrue(data["balance"]==50)        
 
+    def test_get_transactions(self):
+        '''it should return user transactions paginated'''
+        '''it should fail if user has invalid loggedin token'''
+        res=self.client().get("/users/transactions",headers={"Authorization": f"Bearer {self.testjwt.decode('ASCII')}invalidstring"})
+        data=json.loads(res.data)
+        self.assertTrue(res.status_code==401)
+        self.assertTrue(data["message"]=="Invalid token")
+        
+        '''it should fail if user in token deosnt exist'''
+        mock_jwt=encode_jwt("notexists@email.com",["get:users","post:users"])
+        res=self.client().get("/users/transactions",headers={"Authorization": f"Bearer {mock_jwt.decode('ASCII')}"})
+        data=json.loads(res.data)
+        self.assertTrue(res.status_code==404)
+        self.assertTrue(data["message"]=="user does not exist")
+
+        '''it should return transaction history'''
+        i=1
+        while(i<=20):
+            UserTransactions("credit",'test2@email.com',i,True,
+            datetime.utcnow().date().isoformat(),datetime.utcnow().time().isoformat(),
+            'test@email.com').insert();i+=1
+
+        res= self.client().get("/users/transactions",
+        headers={"Authorization": f"Bearer {self.testjwt.decode('ASCII')}"})
+        [transaction.delete() for transaction in UserTransactions.query.all()]
+        data=json.loads(res.data)
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(isinstance(data["transactions"],list))
+        self.assertEqual(len(data["transactions"]),10)
+        self.assertTrue(data["user"]=='test@email.com')
 
     
 

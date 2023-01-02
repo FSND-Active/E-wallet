@@ -20,9 +20,12 @@ def create_app(test_config=None):
         page = request.args.get("page", 1, type=int)
         start = (page - 1)*10
         end = start+10
-
-        items = {transaction.format() for transaction in transactions}
-        return items[-start:-end]
+        if len(transactions)==0:
+            return {}
+        items = [ transaction.format() for transaction in transactions]
+        
+        print(items[start:end])
+        return items[start:end]
 
     @app.after_request
     def after_request(response):
@@ -211,7 +214,6 @@ def create_app(test_config=None):
                 "balance": res.balance
             }), 200
         except:
-            print(sys.exc_info())
             abort(422)
 
     @app.route("/users/transactions", methods=["GET"])
@@ -219,16 +221,22 @@ def create_app(test_config=None):
     def get_users_transactions(payload):
         mail = payload["email"]
         try:
-            transactions = UserTransactions.query.filter_by(user=mail).all()
-            if transactions is None:
-                abort(404)
+            user=Users.query.filter_by(email=mail).one_or_none()
+            transactions = UserTransactions.query.filter_by(user=mail).order_by(UserTransactions.time).all()
+            if user is None:
+                return jsonify({
+                    "status":404,
+                    "success":False,
+                    "message":"user does not exist"
+                }), 404
             return jsonify({
                 "status": 200,
                 "success": True,
-                "tansactions": paginate(request,transactions),
+                "transactions": paginate(request,transactions),
                 "user": mail
             }), 200
-        except:
+        except Exception as e:
+            print(sys.exc_info(),e)
             abort(422)
 
     @app.route("/users/details", methods=["GET"])
