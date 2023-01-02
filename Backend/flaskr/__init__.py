@@ -222,7 +222,7 @@ def create_app(test_config=None):
         mail = payload["email"]
         try:
             user=Users.query.filter_by(email=mail).one_or_none()
-            transactions = UserTransactions.query.filter_by(user=mail).order_by(UserTransactions.time).all()
+            transactions = UserTransactions.query.filter_by(user=mail).order_by(db.desc(UserTransactions.time)).all()
             if user is None:
                 return jsonify({
                     "status":404,
