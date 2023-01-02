@@ -20,9 +20,10 @@ def create_app(test_config=None):
         page = request.args.get("page", 1, type=int)
         start = (page - 1)*10
         end = start+10
-
-        items = {transaction.format() for transaction in transactions}
-        return items[-start:-end]
+        if len(transactions)==0:
+            return {}
+        items = [ transaction.format() for transaction in transactions]
+        return items[start:end]
 
     @app.after_request
     def after_request(response):
@@ -59,12 +60,12 @@ def create_app(test_config=None):
             }), 403
         try:
             pw_hash = bcrypt.generate_password_hash(password+SALT).decode('utf-8')
-            user = Users(first_name=fname, last_name=lname,email=email, username=uname, password=pw_hash)
-
+            user = Users(first_name=fname, last_name=lname,email=email, username=uname, password=pw_hash,created_at=datetime.utcnow().date().isoformat())
             wallet = UserWallet(balance=int(0), user=email)
 
-            wallet.insert()
             user.insert()
+            wallet.insert()
+            
             return jsonify({
                 "success": True,
                 "status": 200,
@@ -211,7 +212,6 @@ def create_app(test_config=None):
                 "balance": res.balance
             }), 200
         except:
-            print(sys.exc_info())
             abort(422)
 
     @app.route("/users/transactions", methods=["GET"])
@@ -219,16 +219,22 @@ def create_app(test_config=None):
     def get_users_transactions(payload):
         mail = payload["email"]
         try:
-            transactions = UserTransactions.query.filter_by(user=mail).all()
-            if transactions is None:
-                abort(404)
+            user=Users.query.filter_by(email=mail).one_or_none()
+            transactions = UserTransactions.query.filter_by(user=mail).order_by(db.desc(UserTransactions.time)).all()
+            if user is None:
+                return jsonify({
+                    "status":404,
+                    "success":False,
+                    "message":"user does not exist"
+                }), 404
             return jsonify({
                 "status": 200,
                 "success": True,
-                "tansactions": paginate(request,transactions),
+                "transactions": paginate(request,transactions),
                 "user": mail
             }), 200
-        except:
+        except Exception as e:
+            print(sys.exc_info(),e)
             abort(422)
 
     @app.route("/users/details", methods=["GET"])
@@ -240,7 +246,11 @@ def create_app(test_config=None):
             detail = UserDetails.query.filter_by(user=mail).one_or_none()
             user = Users.query.filter_by(email=mail).one_or_none()
             if user is None:
-                abort(404)
+                return jsonify({
+                    "status":404,
+                    "success":False,
+                    "message":"user does not exist"
+                }), 404
             if detail:
                 personal_detail = detail.format()
                 del personal_detail["utility_bill"]
@@ -301,6 +311,7 @@ def create_app(test_config=None):
             "status": 400,
             "success": False,
             "message": "Bad Request"
+            
         }), 400
 
     @app.errorhandler(500)
