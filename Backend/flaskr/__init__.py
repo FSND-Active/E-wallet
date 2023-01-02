@@ -23,8 +23,6 @@ def create_app(test_config=None):
         if len(transactions)==0:
             return {}
         items = [ transaction.format() for transaction in transactions]
-        
-        print(items[start:end])
         return items[start:end]
 
     @app.after_request
@@ -62,12 +60,12 @@ def create_app(test_config=None):
             }), 403
         try:
             pw_hash = bcrypt.generate_password_hash(password+SALT).decode('utf-8')
-            user = Users(first_name=fname, last_name=lname,email=email, username=uname, password=pw_hash)
-
+            user = Users(first_name=fname, last_name=lname,email=email, username=uname, password=pw_hash,created_at=datetime.utcnow().date().isoformat())
             wallet = UserWallet(balance=int(0), user=email)
 
-            wallet.insert()
             user.insert()
+            wallet.insert()
+            
             return jsonify({
                 "success": True,
                 "status": 200,
@@ -248,7 +246,11 @@ def create_app(test_config=None):
             detail = UserDetails.query.filter_by(user=mail).one_or_none()
             user = Users.query.filter_by(email=mail).one_or_none()
             if user is None:
-                abort(404)
+                return jsonify({
+                    "status":404,
+                    "success":False,
+                    "message":"user does not exist"
+                }), 404
             if detail:
                 personal_detail = detail.format()
                 del personal_detail["utility_bill"]
@@ -309,6 +311,7 @@ def create_app(test_config=None):
             "status": 400,
             "success": False,
             "message": "Bad Request"
+            
         }), 400
 
     @app.errorhandler(500)

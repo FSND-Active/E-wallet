@@ -30,10 +30,10 @@ class WalletTestCase(unittest.TestCase):
             self.db.create_all()
         
         if Users.query.filter_by(email="test@email.com").first() is None:
-            Users("testuser","testuser","test@email.com","test@email.com",bcrypt.generate_password_hash("test"+SALT).decode("utf-8")).insert()
+            Users("testuser","testuser","test@email.com","test@email.com",bcrypt.generate_password_hash("test"+SALT).decode("utf-8"),datetime.utcnow().date().isoformat()).insert()
         
         if Users.query.filter_by(email="test2@email.com").first() is None:
-            Users("testuser2","testuser2","test2@email.com","test2@email.com",bcrypt.generate_password_hash("test2"+SALT).decode("utf-8")).insert()
+            Users("testuser2","testuser2","test2@email.com","test2@email.com",bcrypt.generate_password_hash("test2"+SALT).decode("utf-8"),datetime.utcnow().date().isoformat()).insert()
         self.testjwt=encode_jwt("test@email.com",["get:users","post:users"])
         self.testjwt2=encode_jwt("test2@email.com",["get:users","post:users"])
 
@@ -71,9 +71,10 @@ class WalletTestCase(unittest.TestCase):
 
         '''it should register valid user'''
         res= self.client().post("/users/register",json={"first_name":"test","last_name":"test",
-        "email":"test5@email.com","username":"test5","password":"test5"})
-        Users.query.filter_by(email="test5@email.com").one_or_none().delete()
+        "email":"test5@email.com","username":"test5@email.com","password":"test5"})
+        
         data= json.loads(res.data)
+        Users.query.filter_by(email="test5@email.com").one_or_none().delete()
         self.assertTrue(res.status_code==200)
         self.assertEqual(data["email"],"test5@email.com")
 
@@ -149,7 +150,7 @@ class WalletTestCase(unittest.TestCase):
             datetime.utcnow().date().isoformat(),datetime.utcnow().time().isoformat(),
             'test@email.com').insert();i+=1
 
-        res= self.client().get("/users/transactions",
+        res= self.client().get("/users/transactions?page=1",
         headers={"Authorization": f"Bearer {self.testjwt.decode('ASCII')}"})
         [transaction.delete() for transaction in UserTransactions.query.all()]
         data=json.loads(res.data)

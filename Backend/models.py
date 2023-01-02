@@ -36,15 +36,17 @@ class Users(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
+    created_at= db.Column(db.Date,nullable=False)
     transactions= db.relationship('UserTransactions',backref='users',lazy=True)
     wallet=db.relationship('UserWallet',backref='users',lazy=True,cascade='all, delete-orphan')
 
-    def __init__(self, first_name, last_name, email, username, password):
+    def __init__(self, first_name, last_name, email, username, password,created_at=''):
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
         self.username = username
         self.password = password
+        self.created_at=created_at
 
     def insert(self):
         db.session.add(self)
